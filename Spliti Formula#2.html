@@ -1,0 +1,2818 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    
+    <title>Split Grid - SportOrg</title>
+    
+    
+<style>
+    p,
+    blockquote,
+    ul,
+    ol,
+    dl,
+    table,
+    pre {
+        margin-top: 0;
+        margin-bottom: 16px;
+    }
+
+    table.sportorg-table {
+        display: block;
+        width: 100%;
+        overflow: visible;
+        word-break: keep-all;
+        border-collapse: collapse;
+        border-spacing: 0;
+    }
+
+    table.sportorg-table th {
+        font-weight: bold;
+        border-bottom: 2px solid black;
+        margin-bottom: 5px;
+    }
+
+    table.sportorg-table th,
+    table.sportorg-table td {
+        padding: 3px 13px;
+        text-align: left;
+    }
+
+    table.sportorg-table tr {
+        background-color: #fff;
+        white-space: nowrap;
+        overflow: hidden;
+    }
+
+    table.empty-table {
+        width: auto;
+    }
+
+    table.empty-table tr {
+        background-color: white;
+        border: 0;
+    }
+
+    table.empty-table td,
+    table.empty-table th {
+        border: 0;
+    }
+
+    hr {
+        box-sizing: content-box;
+        height: 0;
+    }
+
+    hr {
+        height: 0;
+        margin: 15px 0;
+        overflow: hidden;
+        background: transparent;
+        border: 0;
+        border-bottom: 1px solid #ddd;
+    }
+
+    hr:before {
+        display: table;
+        content: "";
+    }
+
+    hr:after {
+        display: table;
+        clear: both;
+        content: "";
+    }
+
+    hr {
+        height: 4px;
+        padding: 0;
+        margin: 16px 0;
+        background-color: #e7e7e7;
+        border: 0 none;
+    }
+
+    a:not([href]) {
+        color: inherit;
+        text-decoration: none;
+    }
+
+    a {
+        color: #4078c0;
+        text-decoration: none;
+    }
+
+    a:hover,
+    a:active {
+        text-decoration: underline;
+    }
+
+    a {
+        background-color: transparent;
+    }
+
+    a:active,
+    a:hover {
+        outline: 0;
+    }
+
+    .print-only {
+        display: none;
+    }
+
+    .no-print {
+        display: block;
+    }
+
+    .nowrap {
+        white-space: nowrap;
+    }
+
+    .text-center {
+        text-align: center;
+    }
+
+    /* SPLITS */
+
+    .table-leg {
+        padding: 0;
+        margin: 0;
+    }
+
+    .table-leg th,
+    .table-leg td {
+        border: 0;
+    }
+
+    .table-leg tr {
+        border-top: 0;
+    }
+
+    .result-1,
+    .result-2,
+    .result-3 {
+        font-weight: bold;
+    }
+
+    @media print {
+        @page {
+            margin: 0.5cm;
+        }
+
+        body {
+            font-size: 85%;
+        }
+
+        table.sportorg-table {
+            display: table;
+            width: 100%;
+        }
+
+        table.sportorg-table th,
+        table.sportorg-table td {
+            padding: 1px 10px;
+        }
+
+        table.sportorg-table,
+        pre {
+            margin-bottom: 1px;
+        }
+
+
+        h1,
+        h2,
+        h3,
+        h4,
+        h5,
+        h6 {
+            margin: 1px 0;
+        }
+
+        section,
+        .new-page {
+            page-break-before: always;
+        }
+
+        ul {
+            page-break-inside: avoid;
+        }
+
+        p {
+            widows: 4;
+        }
+
+        a[href^="http"]:after {
+            content: " (" attr(href) ")";
+        }
+
+        abbr[title]:after {
+            content: " (" attr(title) ")";
+        }
+
+        .print-only {
+            display: inline;
+        }
+
+        .no-print {
+            display: none;
+        }
+    }
+</style>
+
+    
+<style>
+    .sportorg-settings {
+        position: fixed;
+        border: 1px solid #dddddd;
+        border-radius: 5px;
+        background: white;
+        top: 3px;
+        right: 3px;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+    }
+
+    .sportorg-settings-row {
+        margin: 5px;
+    }
+
+    @media print {
+        .sportorg-settings {
+            display: none;
+        }
+    }
+</style>
+<script>
+    var MAX_ORG_NAME = 50;
+    var MAX_PERSON_NAME = 30;
+
+    var TableGenerator = (function () {
+        var Table = function () {
+            return document.createElement('table');
+        };
+        var THead = function () {
+            return document.createElement('thead');
+        };
+        var TBody = function () {
+            return document.createElement('tbody');
+        };
+        var Tr = function () {
+            return document.createElement('tr');
+        };
+        var Th = function () {
+            return document.createElement('th');
+        };
+        var Td = function () {
+            return document.createElement('td');
+        };
+
+        function TableGenerator(data, fields) {
+            this.data = data;
+            this.fields = fields;
+        }
+
+        TableGenerator.prototype.getTable = function (options) {
+            var table = Table();
+            if (options && options.className) table.className = options.className;
+            table.appendChild(this.getHead());
+            table.appendChild(this.getBody());
+            return table;
+        };
+
+        TableGenerator.prototype.getHead = function () {
+            var tr = Tr();
+            for (var _i = 0, _a = this.headers(); _i < _a.length; _i++) {
+                var key = _a[_i];
+                var th = Th();
+                var title = this.getHeaderName(key);
+                if (title instanceof Node) {
+                    th.appendChild(title);
+                }
+                else {
+                    th.appendChild(document.createTextNode(title));
+                }
+                tr.appendChild(th);
+            }
+            var thead = THead();
+            thead.appendChild(tr);
+            return thead;
+        };
+
+        TableGenerator.prototype.getBody = function () {
+            var tbody = TBody();
+            var cols = this.headers().length;
+            for (var _b = 0, _c = this.data; _b < _c.length; _b++) {
+                var obj = _c[_b];
+                var tr = Tr();
+                if (obj instanceof Node || typeof obj === 'string') {
+                    var td = Td();
+                    td.colSpan = cols;
+                    if (typeof obj === 'string') {
+                        td.appendChild(document.createTextNode(obj));
+                    }
+                    else {
+                        td.appendChild(obj);
+                    }
+                    tr.appendChild(td);
+                }
+                else {
+                    for (var _i = 0, _a = this.headers(); _i < _a.length; _i++) {
+                        var key = _a[_i];
+                        var td = Td();
+                        if (obj[key]) {
+                            if (obj[key] instanceof Node) {
+                                td.appendChild(obj[key]);
+                            }
+                            else {
+                                td.appendChild(document.createTextNode(obj[key]));
+                            }
+                        }
+                        tr.appendChild(td);
+                    }
+                }
+                tbody.appendChild(tr);
+            }
+            return tbody;
+        };
+
+        TableGenerator.prototype.headers = function () {
+            if (this._headers) {
+                return this._headers
+            }
+            if (!this.fields) {
+                var headers = {};
+                for (var _i = 0, _a = this.data; _i < _a.length; _i++) {
+                    var obj = _a[_i];
+                    for (var key in obj) {
+                        headers[key] = true;
+                    }
+                }
+                this._headers = Object.keys(headers)
+            } else if (this.fields instanceof Array) {
+                this._headers = [];
+                for (var _i = 0, _a = this.fields; _i < _a.length; _i++) {
+                    var field = _a[_i];
+                    if (typeof field === 'string') {
+                        this._headers.push(field);
+                    }
+                    else if (field.active !== false) {
+                        this._headers.push(field.key);
+                    }
+                }
+            }
+            return this._headers;
+        };
+
+        TableGenerator.prototype.getHeaderName = function (key) {
+            if (this.fields && this.fields instanceof Array) {
+                for (var _i = 0, _a = this.fields; _i < _a.length; _i++) {
+                    var field = _a[_i];
+                    if (typeof field === 'object' && field.key === key) {
+                        return field.title;
+                    }
+                }
+            }
+            return key;
+        };
+
+        return TableGenerator
+    }());
+
+    var TableTextGenerator = (function () {
+
+        function TableTextGenerator(data, fields) {
+            this.data = data;
+            this.fields = fields;
+        }
+
+        TableTextGenerator.prototype.getTable = function (options) {
+            var node = document.createElement('pre');
+            if (options && options.className) node.className = options.className;
+            node.appendChild(this.getHead());
+            node.appendChild(this.getBody());
+            return node;
+        };
+
+        TableTextGenerator.prototype.getSliceText = function (text, size) {
+            if (text === undefined) {
+                text = '';
+            }
+            text = String(text);
+            if (size) {
+                text = text.slice(0, size);
+                if (text.length < size + 1) {
+                    var arr = [];
+                    for (var i = 0; i < size + 1 - text.length; i++) {
+                        arr.push(' ');
+                    }
+                    text += arr.join('');
+                }
+            } else {
+                text += '\t';
+            }
+            return text;
+        };
+
+        TableTextGenerator.prototype.getHead = function () {
+            var text = '';
+            for (var _i = 0, _a = this.headers(); _i < _a.length; _i++) {
+                var key = _a[_i];
+                var h = this.getHeaderObj(key);
+                var title = h && h.title;
+                var size = h && h.size;
+                if (size) {
+                    text += this.getSliceText(title, size);
+                } else {
+                    text += title;
+                }
+            }
+            text += '\n';
+            var blockU = document.createElement('u');
+            var blockB = document.createElement('b');
+            blockB.appendChild(document.createTextNode(text));
+            blockU.appendChild(blockB);
+            return blockU;
+        };
+
+        TableTextGenerator.prototype.getBody = function () {
+            var text = '';
+            for (var _b = 0, _c = this.data; _b < _c.length; _b++) {
+                var obj = _c[_b];
+                if (typeof obj === 'string') {
+                    text += obj;
+                } else {
+                    for (var _i = 0, _a = this.headers(); _i < _a.length; _i++) {
+                        var key = _a[_i];
+                        var h = this.getHeaderObj(key);
+                        var size = h && h.size;
+                        if (size) {
+                            text += this.getSliceText(obj[key], size);
+                        } else {
+                            text += obj[key];
+                        }
+                    }
+                }
+                text += '\n';
+            }
+            return document.createTextNode(text);
+        };
+
+        TableTextGenerator.prototype.headers = function () {
+            if (this._headers) {
+                return this._headers
+            }
+            if (!this.fields) {
+                var headers = {};
+                for (var _i = 0, _a = this.data; _i < _a.length; _i++) {
+                    var obj = _a[_i];
+                    for (var key in obj) {
+                        headers[key] = true;
+                    }
+                }
+                this._headers = Object.keys(headers)
+            } else if (this.fields instanceof Array) {
+                this._headers = [];
+                for (var _i = 0, _a = this.fields; _i < _a.length; _i++) {
+                    var field = _a[_i];
+                    if (typeof field === 'string') {
+                        this._headers.push(field);
+                    }
+                    else if (field.active !== false) {
+                        this._headers.push(field.key);
+                    }
+                }
+            }
+            return this._headers;
+        };
+
+        TableTextGenerator.prototype.getHeaderName = function (key) {
+            if (this.fields && this.fields instanceof Array) {
+                for (var _i = 0, _a = this.fields; _i < _a.length; _i++) {
+                    var field = _a[_i];
+                    if (typeof field === 'object' && field.key === key) {
+                        return field.title;
+                    }
+                }
+            }
+            return key;
+        };
+
+        TableTextGenerator.prototype.getHeaderObj = function (key) {
+            if (this.fields && this.fields instanceof Array) {
+                for (var _i = 0, _a = this.fields; _i < _a.length; _i++) {
+                    var field = _a[_i];
+                    if (typeof field === 'object' && field.key === key) {
+                        return field;
+                    }
+                }
+            }
+        };
+
+        return TableTextGenerator
+    }());
+
+    var SettingsGenerator = (function () {
+        var Block = function () {
+            var el = document.createElement('div');
+            el.className = 'sportorg-settings';
+            return el
+        };
+        var Row = function () {
+            var el = document.createElement('div');
+            el.className = 'sportorg-settings-row';
+            return el
+        };
+
+        function SettingsGenerator(settings) {
+            this.settings = settings;
+            this.isShow = true;
+        }
+
+        SettingsGenerator.prototype.show = function () {
+            var block = Block();
+            this.el = block;
+            for (var _i = 0, _a = this.settings; _i < _a.length; _i++) {
+                var setting = _a[_i];
+                var row = Row();
+                row.className = row.className + ' ' + 'sportorg-settings-hidden';
+                row.appendChild(this.getElBySetting(setting));
+                block.appendChild(row);
+            }
+            var btn = Row();
+            btn.appendChild(this.getHiddenButton());
+            block.appendChild(btn);
+            document.body.appendChild(block);
+            this.toggleHidden();
+        };
+        SettingsGenerator.prototype.getElBySetting = function (setting) {
+            if (typeof setting.value === 'boolean') {
+                var i = document.createElement('input');
+                i.type = 'checkbox';
+                if (setting.value) {
+                    i.checked = true;
+                }
+                if (setting.change) {
+                    i.onchange = function () {
+                        if (i.checked !== setting.value) {
+                            setting.change(i.checked);
+                            setting.value = i.checked;
+                        }
+                    }
+                }
+                var label = document.createElement('label');
+                label.appendChild(i);
+                label.appendChild(document.createTextNode(setting.title));
+                return label
+            } else if (setting.value instanceof Array) {
+                var s = document.createElement('select');
+                for (var _i = 0, _a = setting.value; _i < _a.length; _i++) {
+                    var obj = _a[_i];
+                    s.appendChild(new Option(obj.text, obj.value));
+                }
+                if (setting.change) {
+                    s.onchange = function () {
+                        var results = [];
+                        for (var _i = 0, _a = s.selectedOptions; _i < _a.length; _i++) {
+                            var item = _a[_i];
+                            results.push(item.value);
+                        }
+                        setting.change(results);
+                    };
+                }
+                var label = document.createElement('label');
+                label.appendChild(document.createTextNode(setting.title));
+                label.appendChild(s);
+                return label
+            }
+        };
+        SettingsGenerator.prototype.toggleHidden = function () {
+            var els = document.getElementsByClassName('sportorg-settings-hidden');
+            for (var _i = 0, els_ = els; _i < els_.length; _i++) {
+                var el = els_[_i];
+                if (this.isShow) {
+                    el.style.display = 'none';
+                    if (this.el) {
+                        this.el.style.opacity = '.3';
+                    }
+                }
+                else {
+                    el.style.display = 'block';
+                    if (this.el) {
+                        this.el.style.opacity = '1';
+                    }
+                }
+            }
+            this.isShow = !this.isShow;
+        };
+        SettingsGenerator.prototype.getHiddenButton = function () {
+            var el = document.createElement('button');
+            el.appendChild(document.createTextNode('SETTINGS'));
+            var _this = this;
+            el.onclick = function (ev) { _this.toggleHidden() };
+            return el;
+        };
+        return SettingsGenerator;
+    }());
+
+    function toHHMMSS(value) {
+        if (value === 0) {
+            return '00:00:00'
+        }
+        if (!value) return '';
+        value /= 1000;
+        var hours = Math.floor(value / 3600);
+        value %= 3600;
+        var minutes = Math.floor(value / 60);
+        var seconds = ~~(value % 60);
+
+        var date = new Date(2000, 0, 1, hours, minutes, seconds);
+
+        var with0 = function (dd) {
+            return (dd < 10 ? '0' + dd : dd) + '';
+        };
+
+        return with0(date.getHours()) + ':' + with0(date.getMinutes()) + ':' + with0(date.getSeconds());
+    }
+
+    function getById(list, id) {
+        if (id) {
+            for (var _i = 0, list_ = list; _i < list_.length; _i++) {
+                var obj = list_[_i];
+                if (obj.id === id) {
+                    return obj;
+                }
+            }
+        }
+        return null;
+    }
+
+    function racePreparation(race) {
+        for (var _i = 0, _a = race.persons; _i < _a.length; _i++) {
+            var obj = _a[_i];
+            obj.organization = getById(race.organizations, obj.organization_id);
+            obj.group = getById(race.groups, obj.group_id);
+        }
+        for (var _b = 0, _c = race.results; _b < _c.length; _b++) {
+            var obj = _c[_b];
+            obj.status = obj.status === 16 ? 1 : obj.status;
+            obj.person = getById(race.persons, obj.person_id);
+        }
+        for (var _d = 0, _e = race.groups; _d < _e.length; _d++) {
+            var obj = _e[_d];
+            obj.course = getById(race.courses, obj.course_id);
+        }
+        for (var _f = 0, _g = ['groups', 'courses', 'organizations']; _f < _g.length; _f++) {
+            var itemName = _g[_f];
+            race[itemName].sort(function (a, b) {
+                if (a.name.toUpperCase() < b.name.toUpperCase())
+                    return -1;
+                if (a.name.toUpperCase() > b.name.toUpperCase())
+                    return 1;
+                return 0;
+            });
+        }
+        return race;
+    }
+
+    function getGroupsBlockElement(race) {
+        var groupBlock = document.createElement('div');
+        groupBlock.className = 'no-print';
+        for (var _i = 0, _a = race.groups; _i < _a.length; _i++) {
+            var group = _a[_i];
+            var a = document.createElement('a');
+            a.href = '#' + group.name;
+            a.appendChild(document.createTextNode(group.name + ' '));
+            groupBlock.appendChild(a);
+        }
+        return groupBlock;
+    }
+
+    function dateFormat(date) {
+        date = date ? new Date(date) : new Date();
+        return date.getDate().toString().padStart(2, '0') + '.' + (date.getMonth() + 1).toString().padStart(2, '0') + '.' + date.getFullYear();
+    }
+
+    var Qualification = {
+        '': 'б/р',
+        0: 'б/р',
+        3: 'IIIю',
+        2: 'IIю',
+        1: 'Iю',
+        6: 'III',
+        5: 'II',
+        4: 'I',
+        7: 'КМС',
+        8: 'МС',
+        9: 'МСМК'
+    };
+
+    var STATUS_PRIORITY = [8, 4, 3, 5, 13];
+
+    function guid() {
+        function s4() {
+            return Math.floor((1 + Math.random()) * 0x10000)
+                .toString(16)
+                .substring(1);
+        }
+        return s4() + s4() + '-' + s4() + '-' + s4() + '-' + s4() + '-' + s4() + s4() + s4();
+    }
+
+    function base64ToBytes(base64) {
+        base64 = base64.replace(/\s+/g, '');
+        const pad = base64.length % 4;
+        if (pad) base64 += '='.repeat(4 - pad);
+        const bin = atob(base64);
+        const arr = new Uint8Array(bin.length);
+        for (let i = 0; i < bin.length; i++) arr[i] = bin.charCodeAt(i);
+        return arr;
+    }
+
+    async function gunzipBase64(base64) {
+        const gz = base64ToBytes(base64);
+        const stream = new Blob([gz]).stream().pipeThrough(new DecompressionStream('gzip'));
+        const ab = await new Response(stream).arrayBuffer();
+        return new TextDecoder().decode(ab);
+    }
+</script>
+
+</head>
+
+<body>
+    <div id="content">
+<div class="text-center">
+    <h3>Formula#2 <br>20.09.2026 Nizami Park</h3>
+    <h2>SPLIT GRID</h2>
+</div>
+<div class="scheme-switcher" id="scheme-switcher">
+    <span class="scheme-switcher-label">Color scheme:</span>
+    <button type="button" class="scheme-btn" data-scheme="1">1 · Classic</button>
+    <button type="button" class="scheme-btn" data-scheme="2">2 · Grey &amp; Yellow</button>
+    <button type="button" class="scheme-btn" data-scheme="3">3 · Modern</button>
+</div>
+<div id="results-tables"></div>
+
+<style>
+    table.table-split {
+        margin: 0;
+    }
+
+    table.table-split td {
+        border: 0;
+        padding: 0;
+    }
+
+    /* Rank-1 leg/cumulative-time cells in red, rank-2/3 in blue — same
+       palette as the classic OE-style split report this template mirrors.
+       Overrides style.css.html's shared .result-1/2/3 (bold-only) by
+       source order, scoped to this template only. */
+    .result-1 {
+        color: #FF0000;
+    }
+
+    .result-2,
+    .result-3 {
+        color: #0000FF;
+    }
+
+    /* Bottom line of a merged cell (organization under name, diff under
+       result) — smaller and muted so the top line still reads first. */
+    .result-sub {
+        font-size: 85%;
+        color: #666666;
+    }
+
+    /* A control nobody punched (buildSplitCells) — muted, not a rank color,
+       so it never reads as a 1st/2nd/3rd cell. */
+    .split-mp {
+        color: #666666;
+        font-weight: 700;
+        font-size: 90%;
+        text-align: center;
+    }
+
+    /* A control recovered from raw punch data after a mispunch — real time,
+       but unranked (may silently span a skipped leg), so it's italicized
+       and left uncolored rather than getting a rank color it didn't earn. */
+    .split-recovered {
+        color: #666666;
+        font-style: italic;
+    }
+
+    /* ── COLOR SCHEMES ────────────────────────────────────────────────
+       Scheme 1 (default, no attribute): the styling above, unchanged.
+       Scheme 2: grey header/data/footer + pale-yellow time cells, same
+       palette as the classic OE-style report this whole template started
+       from — the two yellows there (#FFFFD0 / #FFFF80) turned out to mark
+       regular rows vs. the closing/bottom-bordered row, which maps neatly
+       onto our own Best-time row. Scheme 3: a validated light palette
+       (dataviz skill's reference palette — same source as the chart's own
+       --series-N colors) with gold/blue "podium" tiers instead of raw
+       red/blue, so the fastest cell reads as an achievement highlight
+       rather than borrowing red's usual "danger" meaning. */
+
+    .scheme-switcher {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-wrap: wrap;
+        gap: 6px;
+        margin: 0 0 0.8rem;
+        font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
+    }
+
+    .scheme-switcher-label {
+        font-size: 0.8rem;
+        color: #52514e;
+    }
+
+    .scheme-btn {
+        padding: 0.3rem 0.7rem;
+        border: 1.5px solid #c8d8e4;
+        border-radius: 6px;
+        background: #fff;
+        color: #222;
+        font-size: 0.8rem;
+        cursor: pointer;
+    }
+
+    .scheme-btn:hover {
+        background: #f2f8fa;
+    }
+
+    .scheme-btn.is-active {
+        border-color: #2a78d6;
+        background: #2a78d6;
+        color: #fff;
+        font-weight: 600;
+    }
+
+    /* Scheme 2 — grey & yellow */
+
+    body[data-color-scheme="2"] {
+        background: #E0E0E0;
+    }
+
+    body[data-color-scheme="2"] #footer {
+        background: #E0E0E0;
+        color: #000000;
+    }
+
+    body[data-color-scheme="2"] table.sportorg-table th {
+        background: #E0E0E0;
+        color: #000000;
+        border-bottom: 1px solid #808080;
+    }
+
+    body[data-color-scheme="2"] table.sportorg-table td {
+        background: #E0E0E0;
+        color: #000000;
+    }
+
+    body[data-color-scheme="2"] .result-sub {
+        color: #4d4d4d;
+    }
+
+    body[data-color-scheme="2"] .split-mp,
+    body[data-color-scheme="2"] .split-recovered {
+        color: #4d4d4d;
+    }
+
+    body[data-color-scheme="2"] .table-split td {
+        background: #FFFFD0;
+    }
+
+    body[data-color-scheme="2"] .table-split td.best-time-cell {
+        background: #FFFF80;
+    }
+
+    body[data-color-scheme="2"] .result-1 {
+        color: #FF0000;
+    }
+
+    body[data-color-scheme="2"] .result-2,
+    body[data-color-scheme="2"] .result-3 {
+        color: #0000FF;
+    }
+
+    /* Scheme 3 — validated light palette, gold/blue podium tiers */
+
+    body[data-color-scheme="3"] {
+        background: #f9f9f7;
+        color: #0b0b0b;
+    }
+
+    body[data-color-scheme="3"] #footer {
+        background: #efeee9;
+        border-top: 1px solid #e1e0d9;
+    }
+
+    body[data-color-scheme="3"] table.sportorg-table th {
+        background: #efeee9;
+        color: #0b0b0b;
+        border-bottom: 1px solid #c3c2b7;
+    }
+
+    body[data-color-scheme="3"] table.sportorg-table td {
+        background: #f9f9f7;
+        color: #0b0b0b;
+    }
+
+    body[data-color-scheme="3"] .result-sub {
+        color: #52514e;
+    }
+
+    body[data-color-scheme="3"] .split-mp,
+    body[data-color-scheme="3"] .split-recovered {
+        color: #52514e;
+    }
+
+    body[data-color-scheme="3"] .result-1 {
+        color: #8a5a00;
+        background: #fdf1d6;
+    }
+
+    body[data-color-scheme="3"] .result-2,
+    body[data-color-scheme="3"] .result-3 {
+        color: #1c5cab;
+        background: #eaf1fb;
+    }
+
+    body[data-color-scheme="3"] .table-split td.best-time-cell {
+        background: #efeee9;
+    }
+
+    /* ── SPLIT CHART ──────────────────────────────────────────────────
+       Ported from urix's Race Results chart (public/js/scoring.js /
+       urix.css) — same mechanic: opt-in checkboxes highlight up to 8
+       finishers, one line each, Y = gap to whoever led at that control,
+       inverted so the leader rides the top at 0. Standalone report, so
+       the palette/rules are copied in rather than shared via urix.css. */
+
+    .split-chart-btn-row {
+        margin: 0.3rem 0 0.5rem;
+    }
+
+    .split-chart-toggle-btn {
+        padding: 0.25rem 0.6rem;
+        border: 1.5px solid #2a78d6;
+        border-radius: 6px;
+        font-size: 0.8rem;
+        font-weight: 600;
+        color: #2a78d6;
+        background: #fff;
+        cursor: pointer;
+    }
+
+    .split-chart-toggle-btn:hover {
+        background: #2a78d6;
+        color: #fff;
+    }
+
+    .split-chart-check {
+        cursor: pointer;
+    }
+
+    .split-chart-check-wrap {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+    }
+
+    /* Colored pin next to a checked runner's checkbox in the results
+       table — same color as their line on the chart, so it's obvious
+       which row goes with which line without opening the chart. */
+    .split-chart-check-pin {
+        display: inline-block;
+        width: 9px;
+        height: 9px;
+        border-radius: 50%;
+        border: 1px solid rgba(0, 0, 0, 0.25);
+        flex-shrink: 0;
+    }
+
+    /* Global, not scoped to .split-chart-panel — the results table's color
+       pins (outside the panel) need var(--series-N) too, to show which
+       runner is which chart line right at their row. */
+    body {
+        --chart-ink: #0b0b0b;
+        --chart-ink-secondary: #52514e;
+        --chart-muted: #898781;
+        --chart-gridline: #e1e0d9;
+        --chart-accent: #2a78d6;
+
+        --series-1: #2a78d6;
+        /* blue */
+        --series-2: #1baf7a;
+        /* aqua */
+        --series-3: #eda100;
+        /* yellow */
+        --series-4: #008300;
+        /* green */
+        --series-5: #4a3aa7;
+        /* violet */
+        --series-6: #e34948;
+        /* red */
+        --series-7: #e87ba4;
+        /* magenta */
+        --series-8: #eb6834;
+        /* orange */
+    }
+
+    .split-chart-panel {
+        margin-bottom: 0.8rem;
+        padding: 0.7rem 0.8rem;
+        border: 1.5px solid #c8d8e4;
+        border-radius: 8px;
+        background: #fff;
+    }
+
+    .split-chart-empty {
+        font-size: 0.85rem;
+        color: var(--chart-ink-secondary, #52514e);
+    }
+
+    .split-chart-hint {
+        font-size: 0.8rem;
+        color: var(--chart-ink-secondary);
+        margin-bottom: 0.6rem;
+    }
+
+    .split-chart-clear {
+        margin-left: 0.4rem;
+        padding: 0.15rem 0.55rem;
+        border: 1.5px solid #c8d8e4;
+        border-radius: 6px;
+        background: #fff;
+        font-size: 0.75rem;
+        cursor: pointer;
+    }
+
+    .split-chart-clear:hover {
+        background: #f2f8fa;
+    }
+
+    .split-chart-svg-wrap {
+        width: 100%;
+        overflow-x: auto;
+    }
+
+    .split-chart-svg {
+        width: 100%;
+        max-width: 800px;
+        height: auto;
+        min-width: 240px;
+        display: block;
+        font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
+    }
+
+    .split-chart-grid {
+        stroke: var(--chart-gridline);
+        stroke-width: 0.5;
+    }
+
+    .split-chart-axis-label {
+        fill: var(--chart-muted);
+        font-size: 5px;
+    }
+
+    .split-chart-crosshair {
+        stroke: var(--chart-accent);
+        stroke-width: 0.5;
+        opacity: 0.35;
+    }
+
+    .split-chart-colhit {
+        cursor: pointer;
+    }
+
+    .split-chart-colhit .split-chart-axis-label {
+        transition: fill 0.15s;
+    }
+
+    .split-chart-colhit:hover .split-chart-axis-label,
+    .split-chart-colhit.is-selected .split-chart-axis-label {
+        fill: var(--chart-accent);
+        font-weight: 700;
+    }
+
+    .split-chart-line-group {
+        cursor: pointer;
+    }
+
+    .split-chart-line {
+        stroke: var(--chart-muted);
+        stroke-width: 1;
+        stroke-linejoin: round;
+        stroke-linecap: round;
+        fill: none;
+        transition: stroke 0.15s, stroke-width 0.15s;
+    }
+
+    .split-chart-line-hit {
+        stroke: transparent;
+        stroke-width: 7;
+        fill: none;
+        pointer-events: stroke;
+    }
+
+    .split-chart-dot {
+        fill: var(--chart-muted);
+        stroke: #fff;
+        stroke-width: 1;
+    }
+
+    .split-chart-line-group.is-highlighted .split-chart-line {
+        stroke: var(--line-color, var(--chart-accent));
+        stroke-width: 1.5;
+    }
+
+    .split-chart-line-group.is-highlighted .split-chart-dot {
+        fill: var(--line-color, var(--chart-accent));
+    }
+
+    .split-chart-line-group.is-highlighted:hover .split-chart-line {
+        stroke-width: 2;
+    }
+
+    /* Mispunch/DSQ/DNF/OVT/WD runner: dashed line, hollow end-dot — the line
+       stopping mid-chart reads as "no further data", not as a finish. */
+    .split-chart-line-group.is-incomplete .split-chart-line {
+        stroke-dasharray: 2.2 1.6;
+    }
+
+    .split-chart-line-group.is-highlighted.is-incomplete .split-chart-dot {
+        fill: #fff;
+        stroke: var(--line-color, var(--chart-accent));
+        stroke-width: 1.5;
+    }
+
+    .split-chart-end-label.is-incomplete {
+        font-style: italic;
+        font-weight: 500;
+        fill: var(--chart-ink-secondary);
+    }
+
+    .split-chart-leader {
+        stroke: var(--chart-muted);
+        stroke-width: 0.5;
+    }
+
+    .split-chart-end-label {
+        fill: var(--chart-ink);
+        font-size: 5.5px;
+        font-weight: 600;
+    }
+
+    .split-chart-standings {
+        margin-top: 0.8rem;
+        padding-top: 0.7rem;
+        border-top: 1px solid var(--chart-gridline);
+    }
+
+    .split-chart-standings-title {
+        font-size: 0.75rem;
+        font-weight: 700;
+        color: var(--chart-muted);
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        margin-bottom: 0.5rem;
+    }
+
+    .split-chart-standings-list {
+        list-style: none;
+        display: flex;
+        flex-direction: column;
+        gap: 0.2rem;
+        max-height: 260px;
+        overflow-y: auto;
+        padding: 0;
+        margin: 0;
+    }
+
+    .split-chart-standings-list li {
+        display: flex;
+        align-items: baseline;
+        gap: 0.6rem;
+        padding: 0.25rem 0.4rem;
+        font-size: 0.85rem;
+        border-radius: 4px;
+    }
+
+    .split-chart-standings-list li:nth-child(odd) {
+        background: #f7fbfc;
+    }
+
+    .split-chart-standing-rank {
+        width: 1.6rem;
+        color: var(--chart-muted);
+        font-variant-numeric: tabular-nums;
+    }
+
+    .split-chart-standing-swatch {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        flex-shrink: 0;
+    }
+
+    .split-chart-standing-bib {
+        font-weight: 700;
+        color: var(--chart-ink);
+        min-width: 3.2rem;
+    }
+
+    .split-chart-standing-name {
+        flex: 1;
+        color: var(--chart-ink-secondary);
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .split-chart-standing-time {
+        font-variant-numeric: tabular-nums;
+        font-weight: 600;
+        color: var(--chart-ink);
+    }
+
+    .split-chart-standing-nodata {
+        margin-top: 0.3rem;
+        font-size: 0.78rem;
+        color: var(--chart-muted);
+        font-style: italic;
+    }
+</style>
+<script>
+    (async () => {
+        var race = "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" ;
+        var selected = {"persons": []} ;
+
+        var race = JSON.parse(await gunzipBase64(race));
+
+        racePreparation(race);
+
+        var isRogaine = race.settings.result_processing_mode === 'scores';
+        var isArdf = race.settings.result_processing_mode === 'ardf';
+
+        // Name+organization and result+diff each collapse into one cell,
+        // top line primary / bottom line secondary — same visual language
+        // as the leg-time/cumulative-time split cells below.
+        function twoLineCell(top, bottom) {
+            var table = document.createElement('table');
+            table.className = 'table-split';
+            var trTop = document.createElement('tr');
+            var tdTop = document.createElement('td');
+            tdTop.appendChild(document.createTextNode(top));
+            trTop.appendChild(tdTop);
+            table.appendChild(trTop);
+            var trBottom = document.createElement('tr');
+            var tdBottom = document.createElement('td');
+            tdBottom.className = 'result-sub';
+            tdBottom.appendChild(document.createTextNode(bottom));
+            trBottom.appendChild(tdBottom);
+            table.appendChild(trBottom);
+            return table;
+        }
+
+        // Unranked/uncolored version of rankedTrBlock, for the "Best time" row
+        // — bold throughout, same as the "Best time" label itself.
+        function plainTrBlock(t) {
+            var tr = document.createElement('tr');
+            var td = document.createElement('td');
+            td.className = 'best-time-cell'; // scheme-2/3 hook — see the color-scheme CSS block
+            var b = document.createElement('b');
+            b.appendChild(document.createTextNode(t));
+            td.appendChild(b);
+            tr.appendChild(td);
+            return tr;
+        }
+
+        // Rank-colored row (the shared shape behind every leg/cumulative/finish
+        // cell) — td gets class result-<p>, colored red/blue for p 1 / 2-3 by
+        // this template's own <style> block.
+        function rankedTrBlock(t, p) {
+            var tr = document.createElement('tr');
+            var td = document.createElement('td');
+            td.className = 'result-' + p;
+            td.appendChild(document.createTextNode(t));
+            tr.appendChild(td);
+            return tr;
+        }
+
+        // A control nobody punched at all — no time to show.
+        function mpCell() {
+            var tbl = document.createElement('table');
+            tbl.className = 'table-split';
+            var tr = document.createElement('tr');
+            var td = document.createElement('td');
+            td.className = 'split-mp';
+            td.title = 'Missing punch — this control was not recorded.';
+            td.appendChild(document.createTextNode('MP'));
+            tr.appendChild(td);
+            tbl.appendChild(tr);
+            return tbl;
+        }
+
+        // A control recovered from the raw punch data after a mispunch —
+        // real time, but deliberately unranked/uncolored (see
+        // buildSplitCells): it may silently include one or more skipped
+        // legs, so it isn't a fair leg-for-leg comparison against runners
+        // who actually ran that leg.
+        function recoveredCell(legMsec, relMsec) {
+            var tbl = document.createElement('table');
+            tbl.className = 'table-split';
+            [legMsec, relMsec].forEach(function (msec) {
+                var tr = document.createElement('tr');
+                var td = document.createElement('td');
+                td.className = 'split-recovered';
+                td.title = 'Recovered from the raw punch data after a missing punch — not ranked, may include a skipped leg.';
+                td.appendChild(document.createTextNode(toHHMMSS(msec)));
+                tr.appendChild(td);
+                tbl.appendChild(tr);
+            });
+            return tbl;
+        }
+
+        // Reconstructs one participant's full per-control row, including
+        // everything after a mispunch. SportOrg's own course checker
+        // freezes at the first missed control — every punch after it fails
+        // to match too, even ones that genuinely hit a later control (see
+        // ResultSportident.check() in memory.py) — so this second pass
+        // matches each remaining raw punch to a control by code alone. A
+        // control nobody punched becomes an "MP" cell; a punch recovered
+        // this way still shows a real time (measured from the last
+        // known-good point, so it silently folds in whatever leg(s) were
+        // skipped) but is never ranked/colored and never counted into the
+        // "Best time" row — it isn't a fair leg-for-leg comparison.
+        // controls: the course's control list (in order). Returns
+        // { cells: [{code, kind:'ranked'|'mp'|'recovered', legTime, relTime,
+        // legPlace, relPlace}, ...] (length === controls.length),
+        // lastRefTime: absolute ms of the last known-good point, official
+        // or recovered — used by the caller to compute the finish leg }.
+        function buildSplitCells(result, controls) {
+            var splits = result.splits || [];
+            var official = splits.filter(function (s) { return s.is_correct; });
+            var cells = [];
+            var i;
+            for (i = 0; i < official.length && i < controls.length; i++) {
+                cells.push({
+                    code: controls[i].code, kind: 'ranked',
+                    legTime: official[i].leg_time, relTime: official[i].relative_time,
+                    legPlace: official[i].leg_place, relPlace: official[i].relative_place
+                });
+            }
+            var lastRefTime = official.length
+                ? result.start_msec + official[official.length - 1].relative_time
+                : result.start_msec;
+            if (official.length < controls.length) {
+                var lastOfficial = official.length ? official[official.length - 1] : null;
+                var lastOfficialIdx = lastOfficial ? splits.indexOf(lastOfficial) : -1;
+                var tail = splits.slice(lastOfficialIdx + 1);
+                var tc = 0;
+                for (var ci = official.length; ci < controls.length; ci++) {
+                    var code = controls[ci].code;
+                    var matchIdx = -1;
+                    for (var t = tc; t < tail.length; t++) {
+                        if (String(tail[t].code) === String(code)) { matchIdx = t; break; }
+                    }
+                    if (matchIdx === -1) {
+                        cells.push({ code: code, kind: 'mp' });
+                    } else {
+                        var legTime = tail[matchIdx].time - lastRefTime;
+                        var relTime = tail[matchIdx].time - result.start_msec;
+                        cells.push({ code: code, kind: 'recovered', legTime: legTime, relTime: relTime });
+                        lastRefTime = tail[matchIdx].time;
+                        tc = matchIdx + 1;
+                    }
+                }
+            }
+            return { cells: cells, lastRefTime: lastRefTime };
+        }
+
+        // Turns one buildSplitCells() entry into the actual table cell.
+        function splitCellFor(cell) {
+            if (cell.kind === 'mp') return mpCell();
+            if (cell.kind === 'recovered') return recoveredCell(cell.legTime, cell.relTime);
+            var tbl = document.createElement('table');
+            tbl.className = 'table-split';
+            tbl.appendChild(rankedTrBlock(toHHMMSS(cell.legTime) + ' (' + cell.legPlace + ')', cell.legPlace));
+            tbl.appendChild(rankedTrBlock(toHHMMSS(cell.relTime) + ' (' + cell.relPlace + ')', cell.relPlace));
+            return tbl;
+        }
+
+        // Standard-competition-ranking lookup (ties share a place, next
+        // distinct value skips ahead) against an ascending-sorted array —
+        // same binary search already used for course-view CP columns,
+        // hoisted here so the group-view finish leg can rank against
+        // everyone in its group too.
+        function rankOf(sortedArr, value) {
+            var l = -1, r = sortedArr.length - 1;
+            while (r - l > 1) {
+                var m = Math.floor((l + r) / 2);
+                if (sortedArr[m] >= value) r = m; else l = m;
+            }
+            if (sortedArr[r] === value) return r + 1;
+            return 0;
+        }
+
+        // ── SPLIT CHART ──────────────────────────────────────────────────
+        //   Same design as urix's Race Results chart: opt-in only (nothing
+        //   plotted until checked in the table), up to MAX_HIGHLIGHTED
+        //   runners at a time, one stable color slot per bib. X = control
+        //   point (in course order) + Finish. Y = gap to whoever led at
+        //   that point among the selected runners, inverted so the leader
+        //   rides the top of the chart at 0. Clicking a control's axis
+        //   label pins a "standings at that point" list below the chart.
+        //   State lives outside render() (module scope) so it survives
+        //   every full-panel re-render render() does on any interaction.
+
+        var MAX_HIGHLIGHTED = 8;
+        var chartState = {}; // key -> { open, highlighted: Map(bib -> color slot 0-7), selectedCp }
+
+        // Short label for a chartable non-finisher, shown on their end-of-line
+        // marker so a mispunch/DSQ/DNF line reads as "stopped here", not as a
+        // finish. Falls back to a generic tag for any status not listed.
+        var CHART_STATUS_LABEL = {
+            3: 'DSQ',   // disqualified
+            4: 'MP',    // missing punch
+            5: 'DNF',   // did not finish
+            8: 'OVT',   // overtime
+            9: 'WD',    // sporting withdrawal
+            17: 'MP'    // missed penalty lap
+        };
+
+        function getChartState(key) {
+            if (!chartState[key]) chartState[key] = { open: false, highlighted: new Map(), selectedCp: null, autoFilled: false };
+            return chartState[key];
+        }
+
+        function svgEl(tag, attrs) {
+            var el = document.createElementNS('http://www.w3.org/2000/svg', tag);
+            if (attrs) {
+                Object.keys(attrs).forEach(function (k) { el.setAttribute(k, attrs[k]); });
+            }
+            return el;
+        }
+
+        // Round the axis max up to a "clean" step (in msec) so gridline
+        // labels are round numbers, aiming for roughly 4-6 gridlines.
+        function niceAxisMaxMsec(maxMsec) {
+            var steps = [60000, 120000, 300000, 600000, 900000, 1200000, 1800000, 2700000,
+                3600000, 5400000, 7200000, 10800000, 14400000, 21600000];
+            for (var i = 0; i < steps.length; i++) {
+                if (maxMsec / steps[i] <= 6) return { step: steps[i], max: Math.ceil(maxMsec / steps[i]) * steps[i] };
+            }
+            var lastStep = 28800000;
+            return { step: lastStep, max: Math.ceil(maxMsec / lastStep) * lastStep };
+        }
+
+        // Connects every real (non-null) point in order, skipping missing
+        // controls entirely rather than breaking or guessing a value.
+        function buildPathD(points, xOf, yOf) {
+            var d = '', first = true;
+            points.forEach(function (v, i) {
+                if (v == null) return;
+                d += (first ? 'M' : ' L') + xOf(i).toFixed(1) + ',' + yOf(v).toFixed(1);
+                first = false;
+            });
+            return d;
+        }
+
+        // Gap-to-leader label: 0 reads as "Leader", otherwise a signed +hh:mm:ss.
+        function fmtGapMsec(msec) {
+            if (msec == null) return '—';
+            return msec <= 0 ? 'Leader' : '+' + toHHMMSS(msec);
+        }
+
+        function buildChartCheckbox(key, bib) {
+            var state = getChartState(key);
+            var slot = state.highlighted.get(bib); // number (0-7) if checked, undefined otherwise
+
+            var wrap = document.createElement('span');
+            wrap.className = 'split-chart-check-wrap';
+
+            var input = document.createElement('input');
+            input.type = 'checkbox';
+            input.className = 'split-chart-check';
+            input.dataset.key = key;
+            input.dataset.bib = bib;
+            input.checked = slot !== undefined;
+            if (!input.checked && state.highlighted.size >= MAX_HIGHLIGHTED) input.disabled = true;
+            wrap.appendChild(input);
+
+            // Same color as this runner's line on the chart, so their row
+            // is identifiable without having the chart panel open.
+            if (slot !== undefined) {
+                var pin = document.createElement('span');
+                pin.className = 'split-chart-check-pin';
+                pin.setAttribute('style', 'background-color: var(--series-' + (slot + 1) + ')');
+                wrap.appendChild(pin);
+            }
+
+            return wrap;
+        }
+
+        function buildChartStandings(key, series, columns, selectedCp) {
+            if (!selectedCp) return null;
+            var idx = columns.indexOf(selectedCp);
+            if (idx < 0) return null;
+            var state = getChartState(key);
+
+            var withTime = [], noData = [];
+            series.forEach(function (s) {
+                var gap = s.gaps[idx];
+                (gap == null ? noData : withTime).push({ bib: s.bib, name: s.name, gap: gap });
+            });
+            withTime.sort(function (a, b) { return a.gap - b.gap; });
+
+            var box = document.createElement('div');
+            box.className = 'split-chart-standings';
+            var title = document.createElement('div');
+            title.className = 'split-chart-standings-title';
+            title.textContent = 'Standings at ' + selectedCp;
+            box.appendChild(title);
+
+            var list = document.createElement('ol');
+            list.className = 'split-chart-standings-list';
+            withTime.forEach(function (s, i) {
+                var li = document.createElement('li');
+
+                var rank = document.createElement('span');
+                rank.className = 'split-chart-standing-rank';
+                rank.textContent = String(i + 1);
+                li.appendChild(rank);
+
+                var slot = state.highlighted.get(s.bib);
+                if (slot != null) {
+                    var swatch = document.createElement('span');
+                    swatch.className = 'split-chart-standing-swatch';
+                    swatch.setAttribute('style', 'background-color: var(--series-' + (slot + 1) + ')');
+                    li.appendChild(swatch);
+                }
+
+                var bibEl = document.createElement('span');
+                bibEl.className = 'split-chart-standing-bib';
+                bibEl.textContent = '#' + s.bib;
+                li.appendChild(bibEl);
+
+                var nameEl = document.createElement('span');
+                nameEl.className = 'split-chart-standing-name';
+                nameEl.textContent = s.name;
+                li.appendChild(nameEl);
+
+                var timeEl = document.createElement('span');
+                timeEl.className = 'split-chart-standing-time';
+                timeEl.textContent = fmtGapMsec(s.gap);
+                li.appendChild(timeEl);
+
+                list.appendChild(li);
+            });
+            box.appendChild(list);
+
+            if (noData.length) {
+                var nd = document.createElement('div');
+                nd.className = 'split-chart-standing-nodata';
+                nd.textContent = 'No data yet at ' + selectedCp + ': '
+                    + noData.map(function (s) { return '#' + s.bib; }).join(', ');
+                box.appendChild(nd);
+            }
+
+            return box;
+        }
+
+        // rows: whatever getResultsByGroup/getResultsByCourse returned for
+        // this class — only entries with .data (real competitors, not the
+        // Best-time row or a relay bib-group separator) are chartable.
+        function buildChartSection(key, course, rows) {
+            var state = getChartState(key);
+
+            var wrap = document.createElement('div');
+            wrap.className = 'split-chart-section';
+
+            var btnRow = document.createElement('div');
+            btnRow.className = 'split-chart-btn-row';
+            var btn = document.createElement('button');
+            btn.type = 'button';
+            btn.className = 'split-chart-toggle-btn';
+            btn.dataset.key = key;
+            btn.textContent = state.open ? '📈 Hide chart' : '📈 Chart';
+            btnRow.appendChild(btn);
+            wrap.appendChild(btnRow);
+
+            if (!state.open) return wrap;
+
+            // First time this class's chart is opened, default to the top
+            // MAX_HIGHLIGHTED finishers by place rather than an empty chart
+            // — a one-shot default, not reapplied after "Clear selection"
+            // (autoFilled stays true once set).
+            if (!state.autoFilled) {
+                state.autoFilled = true;
+                if (state.highlighted.size === 0) {
+                    var byPlace = rows
+                        .filter(function (row) { return row.data && row.data.status === 1; })
+                        .sort(function (a, b) {
+                            var pa = a.place > 0 ? a.place : Infinity;
+                            var pb = b.place > 0 ? b.place : Infinity;
+                            return pa - pb;
+                        });
+                    byPlace.slice(0, MAX_HIGHLIGHTED).forEach(function (row, i) {
+                        state.highlighted.set(String(row.data.person.bib), i);
+                    });
+                }
+            }
+
+            var controlCodes = course.controls.map(function (c) { return c.code; });
+            var columns = controlCodes.concat(['Finish']);
+
+            var byBib = {};
+            rows.forEach(function (row) {
+                // Every real competitor row is chartable, not just finishers —
+                // a mispunched/DSQ/DNF runner still has real split data up to
+                // wherever they stopped being valid. Only the Best-time row and
+                // relay bib-group separator rows (no .data) are excluded.
+                if (row.data) byBib[String(row.data.person.bib)] = row;
+            });
+            var selectedBibs = Array.from(state.highlighted.keys()).filter(function (b) { return byBib[b]; });
+
+            var panel = document.createElement('div');
+            panel.className = 'split-chart-panel';
+
+            if (selectedBibs.length < 2) {
+                var empty = document.createElement('div');
+                empty.className = 'split-chart-empty';
+                empty.textContent = selectedBibs.length === 0
+                    ? 'No runners selected. Check up to ' + MAX_HIGHLIGHTED + ' finishers in the table below to compare them here.'
+                    : 'Select at least one more runner to compare.';
+                panel.appendChild(empty);
+                wrap.appendChild(panel);
+                return wrap;
+            }
+
+            var seriesRaw = selectedBibs.map(function (bib) {
+                var row = byBib[bib];
+                var person = row.data.person;
+                // Same reconstruction as the split-grid cells: a control
+                // nobody punched is a gap in the line (null); one recovered
+                // after a mispunch still plots its real cumulative time
+                // (unlike a leg time, "time since start" isn't thrown off by
+                // a skipped control in between, so it's fair to chart).
+                var built = buildSplitCells(row.data, course.controls);
+                var points = built.cells.map(function (cell) { return cell.kind === 'mp' ? null : cell.relTime; });
+                // Any real finish punch is worth plotting too, even off an
+                // otherwise-invalid result — only truly absent finish data
+                // (result_msec <= 0) leaves the line stopped at its last point.
+                points.push(row.data.result_msec > 0 ? row.data.result_msec : null);
+                return {
+                    bib: bib, name: (person.surname + ' ' + person.name), points: points,
+                    incomplete: row.data.status !== 1,
+                    statusLabel: row.data.status !== 1 ? (CHART_STATUS_LABEL[row.data.status] || 'NC') : null
+                };
+            });
+
+            var leaderByColumn = columns.map(function (_, i) {
+                var vals = seriesRaw.map(function (s) { return s.points[i]; }).filter(function (v) { return v != null; });
+                return vals.length ? Math.min.apply(null, vals) : null;
+            });
+            var series = seriesRaw.map(function (s) {
+                return {
+                    bib: s.bib, name: s.name, incomplete: s.incomplete, statusLabel: s.statusLabel,
+                    gaps: s.points.map(function (v, i) { return (v == null || leaderByColumn[i] == null) ? null : v - leaderByColumn[i]; })
+                };
+            });
+
+            var maxGap = 0;
+            series.forEach(function (s) { s.gaps.forEach(function (g) { if (g != null && g > maxGap) maxGap = g; }); });
+            var axis = niceAxisMaxMsec(maxGap || 60000);
+
+            // Half the linear size of the original — every geometry offset
+            // below is halved to match, so lines/dots/text stay in the same
+            // proportions, just at half scale (not a size change alone,
+            // which would leave stroke/text looking oversized for the plot).
+            var CHART_W = 360, CHART_H = 150;
+            var CHART_MARGIN = { left: 28, right: 8, top: 7, bottom: 17 };
+            var plotW = CHART_W - CHART_MARGIN.left - CHART_MARGIN.right;
+            var plotH = CHART_H - CHART_MARGIN.top - CHART_MARGIN.bottom;
+            var xOf = function (i) { return CHART_MARGIN.left + (columns.length > 1 ? (i * plotW / (columns.length - 1)) : 0); };
+            var yOf = function (gap) { return CHART_MARGIN.top + (axis.max > 0 ? (gap / axis.max) * plotH : 0); };
+
+            var svg = svgEl('svg', { 'class': 'split-chart-svg', viewBox: '0 0 ' + CHART_W + ' ' + CHART_H, preserveAspectRatio: 'xMidYMid meet' });
+
+            for (var s = 0; s <= axis.max; s += axis.step) {
+                var y = yOf(s);
+                svg.appendChild(svgEl('line', {
+                    'class': 'split-chart-grid', x1: CHART_MARGIN.left, x2: CHART_W - CHART_MARGIN.right,
+                    y1: y.toFixed(1), y2: y.toFixed(1)
+                }));
+                var gridLabel = svgEl('text', {
+                    'class': 'split-chart-axis-label', x: CHART_MARGIN.left - 4, y: y.toFixed(1),
+                    'text-anchor': 'end', 'dominant-baseline': 'middle'
+                });
+                gridLabel.textContent = s === 0 ? 'Leader' : '+' + toHHMMSS(s);
+                svg.appendChild(gridLabel);
+            }
+
+            columns.forEach(function (cp, i) {
+                var x = xOf(i);
+                var selected = state.selectedCp === cp;
+                var g = svgEl('g', { 'class': 'split-chart-colhit' + (selected ? ' is-selected' : ''), 'data-key': key, 'data-cp': cp });
+                var rectW = Math.max(18, plotW / columns.length);
+                g.appendChild(svgEl('rect', {
+                    x: (x - rectW / 2).toFixed(1), y: CHART_MARGIN.top,
+                    width: rectW.toFixed(1), height: (plotH + 10), fill: 'transparent'
+                }));
+                var xLabel = svgEl('text', {
+                    'class': 'split-chart-axis-label', x: x.toFixed(1), y: (CHART_H - CHART_MARGIN.bottom + 9),
+                    'text-anchor': 'middle'
+                });
+                xLabel.textContent = cp;
+                g.appendChild(xLabel);
+                svg.appendChild(g);
+            });
+
+            if (state.selectedCp && columns.indexOf(state.selectedCp) >= 0) {
+                var cx = xOf(columns.indexOf(state.selectedCp));
+                svg.appendChild(svgEl('line', {
+                    'class': 'split-chart-crosshair', x1: cx.toFixed(1), x2: cx.toFixed(1),
+                    y1: CHART_MARGIN.top, y2: CHART_H - CHART_MARGIN.bottom
+                }));
+            }
+
+            var ordered = series.slice().sort(function (a, b) { return state.highlighted.get(a.bib) - state.highlighted.get(b.bib); });
+            var endLabelCandidates = [];
+            ordered.forEach(function (s) {
+                var slot = state.highlighted.get(s.bib);
+                var d = buildPathD(s.gaps, xOf, yOf);
+                // A finisher's line ends at the Finish column; a mispunched/
+                // DSQ/DNF runner's real data stops earlier — end the marker at
+                // their last actual point instead of implying a finish.
+                var lastIdx = -1;
+                for (var gi = s.gaps.length - 1; gi >= 0; gi--) {
+                    if (s.gaps[gi] != null) { lastIdx = gi; break; }
+                }
+                if (lastIdx < 0) return; // nothing recorded at all — no line to draw
+                var endGap = s.gaps[lastIdx];
+                var endX = xOf(lastIdx), endY = yOf(endGap);
+                var g = svgEl('g', {
+                    'class': 'split-chart-line-group is-highlighted' + (s.incomplete ? ' is-incomplete' : ''),
+                    'data-key': key, 'data-bib': s.bib,
+                    style: '--line-color: var(--series-' + (slot + 1) + ')'
+                });
+                g.appendChild(svgEl('path', { 'class': 'split-chart-line-hit', d: d, fill: 'none' }));
+                g.appendChild(svgEl('path', { 'class': 'split-chart-line', d: d, fill: 'none' }));
+                g.appendChild(svgEl('circle', { 'class': 'split-chart-dot', cx: endX.toFixed(1), cy: endY.toFixed(1), r: 2.5 }));
+                svg.appendChild(g);
+                endLabelCandidates.push({
+                    bib: s.bib, name: s.name, x: endX, y: endY, gap: endGap,
+                    incomplete: s.incomplete, statusLabel: s.statusLabel
+                });
+            });
+
+            endLabelCandidates.sort(function (a, b) { return a.y - b.y; });
+            var prevY = -Infinity;
+            endLabelCandidates.forEach(function (l) {
+                var ly = l.y;
+                if (ly - prevY < 7) ly = prevY + 7;
+                prevY = ly;
+                if (Math.abs(ly - l.y) > 1.5) {
+                    svg.appendChild(svgEl('line', {
+                        'class': 'split-chart-leader', x1: (l.x + 4).toFixed(1), y1: l.y.toFixed(1),
+                        x2: (l.x + 7).toFixed(1), y2: ly.toFixed(1)
+                    }));
+                }
+                var endLabel = svgEl('text', {
+                    'class': 'split-chart-end-label' + (l.incomplete ? ' is-incomplete' : ''),
+                    x: (l.x + 8).toFixed(1), y: ly.toFixed(1),
+                    'dominant-baseline': 'middle'
+                });
+                endLabel.textContent = '#' + l.bib + ' ' + l.name + ' — '
+                    + (l.incomplete ? l.statusLabel + ' (' + fmtGapMsec(l.gap) + ')' : fmtGapMsec(l.gap));
+                svg.appendChild(endLabel);
+            });
+
+            var hint = document.createElement('div');
+            hint.className = 'split-chart-hint';
+            hint.appendChild(document.createTextNode(
+                selectedBibs.length + ' of ' + MAX_HIGHLIGHTED + ' selected. Y axis is the gap to whoever led at '
+                + 'each control point (leader at 0, top). Uncheck a runner in the table (or click their line) to '
+                + 'remove them; click a control label below the chart to see standings at that point.'
+            ));
+            var clearBtn = document.createElement('button');
+            clearBtn.type = 'button';
+            clearBtn.className = 'split-chart-clear';
+            clearBtn.dataset.key = key;
+            clearBtn.textContent = 'Clear selection';
+            hint.appendChild(clearBtn);
+            panel.appendChild(hint);
+
+            var svgWrap = document.createElement('div');
+            svgWrap.className = 'split-chart-svg-wrap';
+            svgWrap.appendChild(svg);
+            panel.appendChild(svgWrap);
+
+            var standings = buildChartStandings(key, series, columns, state.selectedCp);
+            if (standings) panel.appendChild(standings);
+
+            wrap.appendChild(panel);
+            return wrap;
+        }
+
+        function onToggleChartOpen(key) {
+            getChartState(key).open = !getChartState(key).open;
+            render();
+        }
+
+        // Assigns each newly-highlighted bib the lowest free color slot
+        // (0-7) and frees it again on removal — a runner keeps the same
+        // color for as long as they stay highlighted.
+        function onToggleChartHighlight(key, bib) {
+            var state = getChartState(key);
+            if (state.highlighted.has(bib)) {
+                state.highlighted.delete(bib);
+            } else {
+                if (state.highlighted.size >= MAX_HIGHLIGHTED) return;
+                var used = {};
+                state.highlighted.forEach(function (slot) { used[slot] = true; });
+                var slot = 0;
+                while (used[slot]) slot++;
+                state.highlighted.set(bib, slot);
+            }
+            render();
+        }
+
+        function onClearChartHighlights(key) {
+            getChartState(key).highlighted.clear();
+            render();
+        }
+
+        function onSelectChartColumn(key, cp) {
+            var state = getChartState(key);
+            state.selectedCp = state.selectedCp === cp ? null : cp;
+            render();
+        }
+
+        function bestTimeCell(bestLeg, bestRel) {
+            var tbl = document.createElement('table');
+            tbl.className = 'table-split';
+            tbl.appendChild(plainTrBlock(toHHMMSS(bestLeg)));
+            tbl.appendChild(plainTrBlock(toHHMMSS(bestRel)));
+            return tbl;
+        }
+
+        function bestTimeName() {
+            var b = document.createElement('b');
+            b.appendChild(document.createTextNode('Best time'));
+            return b;
+        }
+
+        function getResultsByGroup(group, count) {
+            count = +count || 0;
+            var isRelay = group.__type ? group.__type === 3 : race.data.race_type === 3;
+            var results = [];
+            var controlBest = {};        // '<index>_<code>' -> fastest leg time seen at that control
+            var bestFinishMsec = null;   // fastest last-control-to-finish leg
+            for (var _i = 0, _a = race.results; _i < _a.length; _i++) {
+                var result = _a[_i];
+                if (result.status !== 13 && result.person && result.person.group && result.person.group.id === group.id && (count ? result.place <= count && result.place > 0 : 1)) {
+                    var r = {
+                        index: 0,
+                        name: (result.person.surname + ' ' + result.person.name).slice(0, MAX_PERSON_NAME),
+                        org: (result.person.organization && String(result.person.organization.name).slice(0, MAX_ORG_NAME)) || '',
+                        qual: Qualification[result.person.qual],
+                        bib: result.person.bib,
+                        penalty_time: toHHMMSS(result.penalty_time),
+                        penalty_laps: result.penalty_laps,
+                        scores_ardf: result.scores_ardf,
+                        rogaine_score: result.rogaine_score,
+                        rogaine_penalty: result.rogaine_penalty,
+                        rogaine_points_earned: result.rogaine_score + result.rogaine_penalty,
+                        result: result.result_current,
+                        result_relay: result.result_relay,
+                        result_msec: result.result_msec,
+                        diff: isRogaine || isArdf ? result.diff_scores : toHHMMSS(result.diff),
+                        place: result.place,
+                        status: result.status,
+                        scores: result.scores,
+                        place_show: result.person.is_out_of_competition ? 'o/c' : result.place === 0 ? '' : result.place === -1 ? '' : result.place,
+                        is_out_of_competition: result.person.is_out_of_competition,
+                        speed: result.speed,
+                        data: result
+                    };
+                    if (result.status !== 1) {
+                        r.diff = '';
+                        r.place_show = '';
+                        r.speed = '';
+                        r.scores = '';
+                        r.rogaine_points_earned = '';
+                        r.rogaine_penalty = '';
+                        r.rogaine_score = '';
+                    }
+
+                    // SPLITS — a reliable single controls list (not relay,
+                    // not any-course bib routing) gets the full recovery
+                    // pass: MP where nothing was punched, an unranked
+                    // "recovered" cell where something was, ranked exactly
+                    // as before up to the mispunch. Otherwise falls back to
+                    // the plain "stop at the mispunch" behavior, since we
+                    // can't safely assume which course a given result ran.
+                    var canRecover = !isRelay && !group.is_any_course && group.course && group.course.controls && group.course.controls.length;
+                    if (result.splits && canRecover) {
+                        var built = buildSplitCells(result, group.course.controls);
+                        built.cells.forEach(function (cell, idx) {
+                            r[idx + '_' + cell.code] = splitCellFor(cell);
+                            if (cell.kind === 'ranked') {
+                                var ckey = idx + '_' + cell.code;
+                                if (controlBest[ckey] === undefined || cell.legTime < controlBest[ckey]) {
+                                    controlBest[ckey] = cell.legTime;
+                                }
+                            }
+                        });
+
+                        var finishMsec = r.result_msec - (built.lastRefTime - result.start_msec);
+
+                        // Finish-leg rank needs every finisher's time, which
+                        // isn't known until the whole group's loop is done —
+                        // stash it here, build the actual cell in the pass
+                        // below (right after this loop finishes).
+                        if (r.status === 1 && finishMsec > 0) {
+                            r._finishMsec = finishMsec;
+                        } else if (r.status !== 1 && result.result_msec > 0 && finishMsec > 0) {
+                            // No official finish leg (the last control before
+                            // it was never officially matched) — still show
+                            // what the raw punches give us, unranked, same
+                            // as any other recovered cell.
+                            r.finish_split = recoveredCell(finishMsec, result.result_msec);
+                        }
+                    } else if (result.splits) {
+                        var control_index = 0;
+                        var lastSplit = 0;
+                        for (var _b = 0, _c = result.splits; _b < _c.length; _b++) {
+                            var split = _c[_b];
+                            if (split.is_correct) {
+
+                                var tbl = document.createElement('table');
+                                tbl.className = 'table-split';
+                                tbl.appendChild(rankedTrBlock(toHHMMSS(split.leg_time) + ' (' + split.leg_place + ')', split.leg_place));
+                                tbl.appendChild(rankedTrBlock(toHHMMSS(split.relative_time) + ' (' + split.relative_place + ')', split.relative_place));
+                                r[control_index + '_' + split.code] = tbl;
+
+                                var ckey = control_index + '_' + split.code;
+                                if (controlBest[ckey] === undefined || split.leg_time < controlBest[ckey]) {
+                                    controlBest[ckey] = split.leg_time;
+                                }
+
+                                control_index++;
+                                lastSplit = split.relative_time;
+                            }
+                        }
+
+                        var finishMsec = r.result_msec - lastSplit;
+
+                        // Finish-leg rank needs every finisher's time, which
+                        // isn't known until the whole group's loop is done —
+                        // stash it here, build the actual cell in the pass
+                        // below (right after this loop finishes).
+                        if (r.status === 1 && finishMsec > 0) {
+                            r._finishMsec = finishMsec;
+                        }
+                    }
+
+                    r.name = twoLineCell(r.name, r.org);
+                    r.result = twoLineCell(r.result, r.diff);
+
+                    var getMultipleTrBlock = function () {
+                        var tr = document.createElement('tr');
+                        for (var i = 0; i < arguments.length; i++) {
+                            var td1 = document.createElement('td');
+                            td1.appendChild(document.createTextNode(arguments[i]));
+                            tr.appendChild(td1);
+                        }
+                        return tr;
+                    };
+
+                    // ALL PUNCHES
+                    var splitTable = document.createElement('table');
+                    splitTable.className = 'table-split';
+                    var splitTr = document.createElement('tr');
+                    splitTable.appendChild(splitTr);
+                    var prevTime = result.start_msec;
+                    for (var _b = 0, _c = result.splits; _b < _c.length; _b++) {
+                        var split = _c[_b];
+                        var tbl = document.createElement('table');
+                        tbl.className = 'table-split';
+                        tbl.appendChild(getMultipleTrBlock('( ' + split.code + ' )', toHHMMSS(split.time - prevTime)));
+                        tbl.appendChild(getMultipleTrBlock('', toHHMMSS(split.time - result.start_msec)));
+                        var splitTd = document.createElement('td');
+                        splitTd.appendChild(tbl);
+                        splitTr.appendChild(splitTd);
+                        prevTime = split.time;
+                    }
+                    r.all_splits = splitTable;
+
+                    results.push(r);
+                }
+            }
+
+            // Now every finisher's _finishMsec is known — rank them against
+            // each other and build the actual F-column cells.
+            var finishTimes = [];
+            results.forEach(function (x) {
+                if (x._finishMsec !== undefined) finishTimes.push(x._finishMsec);
+            });
+            finishTimes.sort(function (a, b) { return a - b; });
+            results.forEach(function (x) {
+                if (x._finishMsec === undefined) return;
+                var finishPlace = rankOf(finishTimes, x._finishMsec);
+                var place_str = x.place > 0 ? x.place : 'o/c';
+                var tblF = document.createElement('table');
+                tblF.className = 'table-split';
+                tblF.appendChild(rankedTrBlock(toHHMMSS(x._finishMsec) + (finishPlace > 0 ? ' (' + finishPlace + ')' : ''), finishPlace));
+                tblF.appendChild(rankedTrBlock(toHHMMSS(x.result_msec) + ' (' + place_str + ')', x.place));
+                x.finish_split = tblF;
+                if (bestFinishMsec === null || x._finishMsec < bestFinishMsec) bestFinishMsec = x._finishMsec;
+            });
+
+            results.sort(function (a, b) {
+                if (isRelay) {
+                    if (a.place < 1) {
+                        return 1
+                    }
+                    if (b.place < 1) {
+                        return -1
+                    }
+                    if (a.place === b.place) {
+                        return ~~(a.bib / 1000) - ~~(b.bib / 1000)
+                    }
+                    return a.place - b.place
+
+                } else {
+                    if (a.status !== 1 && b.status !== 1) {
+                        return STATUS_PRIORITY.indexOf(a.status) - STATUS_PRIORITY.indexOf(b.status);
+                    }
+                    if (a.status !== 1) {
+                        return 1
+                    }
+                    if (b.status !== 1) {
+                        return -1
+                    }
+                    if (a.is_out_of_competition || b.is_out_of_competition) {
+                        if (isRogaine && a.rogaine_score != b.rogaine_score) {
+                            return -(a.rogaine_score - b.rogaine_score);
+                        }
+                        if (isArdf && a.scores_ardf != b.scores_ardf) {
+                            return -(a.scores_ardf - b.scores_ardf);
+                        }
+                        return a.result_msec - b.result_msec;
+                    }
+                    if (a.place < 1) {
+                        return 1
+                    }
+                    if (b.place < 1) {
+                        return -1
+                    }
+                    return a.place - b.place
+                }
+            });
+            var index = 0;
+            if (isRelay) {
+                var prevBib = 0;
+                var resultsList = results.slice();
+                results = [];
+                for (var _i = 0, resultsList_ = resultsList; _i < resultsList_.length; _i++) {
+                    var r = resultsList_[_i];
+                    r.index = '';
+                    if (r.bib % 1000 !== prevBib) {
+                        index++;
+                        results.push({ index: index });
+                        prevBib = r.bib % 1000;
+                    }
+                    results.push(r);
+                }
+            } else {
+                results.forEach(function (elem) {
+                    index++;
+                    elem.index = index;
+                })
+            }
+            if (results.length && !isRelay && store.splitsShow) {
+                var bestRow = { name: bestTimeName() };
+                // "Total" here is the theoretical best — sum of the fastest
+                // leg at every control, not any one real runner's actual
+                // total (which may not have won every leg along the way).
+                var ckeys = Object.keys(controlBest).sort(function (a, b) { return parseInt(a, 10) - parseInt(b, 10); });
+                var runningBest = 0;
+                ckeys.forEach(function (ck) {
+                    runningBest += controlBest[ck];
+                    bestRow[ck] = bestTimeCell(controlBest[ck], runningBest);
+                });
+                if (bestFinishMsec !== null) {
+                    bestRow.finish_split = bestTimeCell(bestFinishMsec, runningBest + bestFinishMsec);
+                }
+                results.push(bestRow);
+            }
+            return results;
+        }
+        function getResultsByCourse(group, count) {
+            count = +count || 0;
+            var isRelay = group.__type ? group.__type === 3 : race.data.race_type === 3;
+            var results = [];
+            var splits_recalc_times = {};
+            var splits_recalc_times_total = {};
+            var finish_recalc_times = []; // every finisher's last-control-to-finish leg, for F-column ranking
+            group.controls.forEach(function (control, index) {
+                splits_recalc_times[index + '_' + control.code] = [];
+                splits_recalc_times_total[index + '_' + control.code] = [];
+            });
+            for (var _i = 0, _a = race.results; _i < _a.length; _i++) {
+                var result = _a[_i];
+                if (result.status !== 13 && result.person && result.person.group && result.person.group.course && result.person.group.course.id === group.id) { //} && (count ? result.place <= count && result.place > 0 : 1)) {
+                    var r = {
+                        index: 0,
+                        name: (result.person.surname + ' ' + result.person.name).slice(0, MAX_PERSON_NAME),
+                        org: (result.person.organization && String(result.person.organization.name).slice(0, MAX_ORG_NAME)) || '',
+                        qual: Qualification[result.person.qual],
+                        bib: result.person.bib,
+                        penalty_time: toHHMMSS(result.penalty_time),
+                        penalty_laps: result.penalty_laps,
+                        scores_ardf: result.scores_ardf,
+                        rogaine_score: result.rogaine_score,
+                        rogaine_penalty: result.rogaine_penalty,
+                        rogaine_points_earned: result.rogaine_score + result.rogaine_penalty,
+                        result: result.result_current,
+                        result_msec: result.result_msec,
+                        diff: isRogaine || isArdf ? result.diff_scores : toHHMMSS(result.diff),
+                        place: result.place,
+                        status: result.status,
+                        scores: result.scores,
+                        place_show: result.person.is_out_of_competition ? 'o/c' : result.place === 0 ? '' : result.place === -1 ? '' : result.place,
+                        is_out_of_competition: result.person.is_out_of_competition,
+                        speed: result.speed,
+                        group: result.person.group.name,
+                        data: result
+                    };
+                    if (result.status !== 1) {
+                        r.diff = '';
+                        r.place_show = '';
+                        r.speed = '';
+                        r.scores = '';
+                        r.rogaine_points_earned = '';
+                        r.rogaine_penalty = '';
+                        r.rogaine_score = '';
+                    }
+
+                    // SPLITS — first pass: collect every RANKED leg/cumulative
+                    // time into the recalc pools used for binary-search
+                    // ranking below. Recovered/MP cells (built in the second
+                    // pass, once every result has been through this one) are
+                    // deliberately excluded — see buildSplitCells.
+                    if (result.splits && group.controls && group.controls.length) {
+                        var builtPre = buildSplitCells(result, group.controls);
+                        builtPre.cells.forEach(function (cell, idx) {
+                            if (cell.kind !== 'ranked') return;
+                            var key = idx + '_' + cell.code;
+                            if (key in splits_recalc_times) {
+                                splits_recalc_times[key].push(cell.legTime);
+                                splits_recalc_times_total[key].push(cell.relTime);
+                            }
+                        });
+                        if (result.status === 1) {
+                            var finishMsecPre = result.result_msec - (builtPre.lastRefTime - result.start_msec);
+                            if (finishMsecPre > 0) finish_recalc_times.push(finishMsecPre);
+                        }
+                    }
+
+                    var getMultipleTrBlock = function () {
+                        var tr = document.createElement('tr');
+                        for (var i = 0; i < arguments.length; i++) {
+                            var td1 = document.createElement('td');
+                            td1.appendChild(document.createTextNode(arguments[i]));
+                            tr.appendChild(td1);
+                        }
+                        return tr;
+                    };
+
+                    // ALL PUNCHES
+                    var splitTable = document.createElement('table');
+                    splitTable.className = 'table-split';
+                    var splitTr = document.createElement('tr');
+                    splitTable.appendChild(splitTr);
+                    var prevTime = result.start_msec;
+                    for (var _b = 0, _c = result.splits; _b < _c.length; _b++) {
+                        var split = _c[_b];
+                        var tbl = document.createElement('table');
+                        tbl.className = 'table-split';
+                        tbl.appendChild(getMultipleTrBlock('( ' + split.code + ' )', toHHMMSS(split.time - prevTime)));
+                        tbl.appendChild(getMultipleTrBlock('', toHHMMSS(split.time - result.start_msec)));
+                        var splitTd = document.createElement('td');
+                        splitTd.appendChild(tbl);
+                        splitTr.appendChild(splitTd);
+                        prevTime = split.time;
+                    }
+                    r.all_splits = splitTable;
+
+                    results.push(r);
+                }
+            }
+            results.sort(function (a, b) {
+                if (isRelay) {
+                    if (a.place < 1) {
+                        return 1
+                    }
+                    if (b.place < 1) {
+                        return -1
+                    }
+                    if (a.place === b.place) {
+                        return ~~(a.bib / 1000) - ~~(b.bib / 1000)
+                    }
+                    return a.place - b.place
+                } else {
+                    if (a.status !== 1 && b.status !== 1) {
+                        return STATUS_PRIORITY.indexOf(a.status) - STATUS_PRIORITY.indexOf(b.status);
+                    }
+                    if (a.status !== 1) {
+                        return 1
+                    }
+                    if (b.status !== 1) {
+                        return -1
+                    }
+                    if (a.is_out_of_competition || b.is_out_of_competition) {
+                        if (isRogaine && a.rogaine_score != b.rogaine_score) {
+                            return -(a.rogaine_score - b.rogaine_score);
+                        }
+                        if (isArdf && a.scores_ardf != b.scores_ardf) {
+                            return -(a.scores_ardf - b.scores_ardf);
+                        }
+                        return a.result_msec - b.result_msec;
+                    }
+                    if (a.place < 1) {
+                        return 1
+                    }
+                    if (b.place < 1) {
+                        return -1
+                    }
+                    if (isRogaine && a.rogaine_score != b.rogaine_score) {
+                        return -(a.rogaine_score - b.rogaine_score);
+                    }
+                    if (isArdf && a.scores_ardf != b.scores_ardf) {
+                        return -(a.scores_ardf - b.scores_ardf);
+                    }
+                    return a.result_msec - b.result_msec;
+                }
+            });
+            var sort_splits_recalc_fnc = function (a, b) {
+                return a - b;
+            }
+            group.controls.forEach(function (control, index) {
+                splits_recalc_times[index + '_' + control.code].sort(sort_splits_recalc_fnc);
+                splits_recalc_times_total[index + '_' + control.code].sort(sort_splits_recalc_fnc);
+            });
+            finish_recalc_times.sort(sort_splits_recalc_fnc);
+            var index = 0;
+            if (isRelay) {
+                var prevBib = 0;
+                var resultsList = results.slice();
+                results = [];
+                for (var _i = 0, resultsList_ = resultsList; _i < resultsList_.length; _i++) {
+                    var r = resultsList_[_i];
+                    r.index = '';
+                    r.name = twoLineCell(r.name, r.org);
+                    r.result = twoLineCell(r.result, r.diff);
+                    if (r.bib % 1000 !== prevBib) {
+                        index++;
+                        results.push({ index: index });
+                        prevBib = r.bib % 1000;
+                    }
+                    results.push(r);
+                }
+            } else {
+                var bestFinishMsec = null;
+                var get_score = function (res) {
+                    if (isRogaine) return res.rogaine_score;
+                    if (isArdf) return res.scores_ardf;
+                    return 0
+                }
+                var newplace = 1;
+                var doubleplace = -1;
+                var best_result_msec = results[0] ? results[0].result_msec : 0;
+                var last_result_msec = results[0] ? results[0].result_msec : 0;
+                var best_score = results[0] ? get_score(results[0]) : 0;
+                var binary_search = function (arr, required) {
+                    if (!arr) {
+                        return 0;
+                    }
+                    var l = -1;
+                    var r = arr.length - 1;
+                    while (r - l > 1) {
+                        var m = Math.floor((l + r) / 2);
+                        if (arr[m] >= required) {
+                            r = m;
+                        } else {
+                            l = m;
+                        }
+                    }
+                    if (arr[r] == required) {
+                        return r + 1;
+                    }
+                    return 0;
+                }
+                results.forEach(function (elem) {
+                    index++;
+                    elem.index = index;
+                    if (!elem.data.person.is_out_of_competition && elem.place !== 0 && elem.place !== -1) {
+                        if (isRogaine || isArdf || last_result_msec < elem.result_msec) {
+                            newplace += 1 + doubleplace;
+                            doubleplace = 0;
+                            last_result_msec = elem.result_msec;
+                        } else {
+                            doubleplace++;
+                        }
+                        elem.diff = isRogaine || isArdf ? best_score - get_score(elem) : toHHMMSS(elem.result_msec - best_result_msec);
+                        elem.place = newplace;
+                        elem.place_show = newplace;
+                    }
+                    if (elem.data.splits && group.controls && group.controls.length) {
+                        var built = buildSplitCells(elem.data, group.controls);
+                        built.cells.forEach(function (cell, idx) {
+                            if (cell.kind !== 'ranked') {
+                                elem[idx + '_' + cell.code] = splitCellFor(cell);
+                                return;
+                            }
+                            var leg_place = binary_search(splits_recalc_times[idx + '_' + cell.code], cell.legTime);
+                            var relative_place = binary_search(splits_recalc_times_total[idx + '_' + cell.code], cell.relTime);
+                            if (leg_place > 0 && relative_place > 0) {
+                                var tbl = document.createElement('table');
+                                tbl.className = 'table-split';
+                                tbl.appendChild(rankedTrBlock(toHHMMSS(cell.legTime) + ' (' + leg_place + ')', leg_place));
+                                tbl.appendChild(rankedTrBlock(toHHMMSS(cell.relTime) + ' (' + relative_place + ')', relative_place));
+                                elem[idx + '_' + cell.code] = tbl;
+                            }
+                        });
+
+                        var finishMsec = elem.result_msec - (built.lastRefTime - elem.data.start_msec);
+
+                        if (elem.status === 1 && finishMsec > 0) {
+                            var finish_place = binary_search(finish_recalc_times, finishMsec);
+                            var tblF = document.createElement('table');
+                            tblF.className = 'table-split';
+                            tblF.appendChild(rankedTrBlock(toHHMMSS(finishMsec) + (finish_place > 0 ? ' (' + finish_place + ')' : ''), finish_place));
+                            tblF.appendChild(rankedTrBlock(toHHMMSS(elem.result_msec) + ' (' + elem.place_show + ')', elem.place));
+                            elem.finish_split = tblF;
+
+                            if (bestFinishMsec === null || finishMsec < bestFinishMsec) bestFinishMsec = finishMsec;
+                        } else if (elem.status !== 1 && elem.result_msec > 0 && finishMsec > 0) {
+                            // No official finish leg — still show what the raw
+                            // punches give us, unranked, same as any other
+                            // recovered cell.
+                            elem.finish_split = recoveredCell(finishMsec, elem.result_msec);
+                        }
+                    }
+
+                    elem.name = twoLineCell(elem.name, elem.org);
+                    elem.result = twoLineCell(elem.result, elem.diff);
+                });
+
+                if (results.length && store.splitsShow) {
+                    var bestRow = { name: bestTimeName() };
+                    // "Total" here is the theoretical best — sum of the
+                    // fastest leg at every control, not any one real
+                    // runner's actual total.
+                    var runningBest = 0;
+                    group.controls.forEach(function (control, index) {
+                        var key = index + '_' + control.code;
+                        var legArr = splits_recalc_times[key];
+                        if (legArr && legArr.length) {
+                            runningBest += legArr[0];
+                            bestRow[key] = bestTimeCell(legArr[0], runningBest);
+                        }
+                    });
+                    if (bestFinishMsec !== null) {
+                        bestRow.finish_split = bestTimeCell(bestFinishMsec, runningBest + bestFinishMsec);
+                    }
+                    results.push(bestRow);
+                }
+            }
+            return results;
+        }
+
+        function getRankingByGroup(group) {
+            var rankingBlock = document.createElement('span');
+            var ranking = group.ranking;
+            if (ranking && ranking.is_active && ranking.rank_scores > 0) {
+                var text = 'Ranking, scores: ' + ranking.rank_scores.toFixed(0);
+                rankingBlock.appendChild(document.createTextNode(text));
+
+                for (var _i = 0; _i < ranking.rank.length; _i++) {
+                    var rank = ranking.rank[_i];
+                    if (rank.is_active) {
+                        if (rank.max_place > 0) {
+                            var text = Qualification[rank.qual] + ' - up to ' + rank.max_place + ' place';
+                            rankingBlock.appendChild(document.createElement("br"));
+                            rankingBlock.appendChild(document.createTextNode(text));
+                        }
+                        else {
+                            if (rank.max_time > 0) {
+                                var text = Qualification[rank.qual] + ' - ' + toHHMMSS(rank.max_time);
+                                if (rank.percent > 0) {
+                                    text += ' (' + rank.percent + '%)';
+                                }
+                                rankingBlock.appendChild(document.createElement("br"));
+                                rankingBlock.appendChild(document.createTextNode(text));
+                            }
+                        }
+                    }
+                }
+            }
+            else {
+                var text = 'Rank was not calculated';
+                rankingBlock.appendChild(document.createTextNode(text));
+            }
+
+            return rankingBlock;
+        }
+
+        var Fields = {
+            fields: [
+                { key: 'index', title: '№', size: 4 },
+                { key: 'group', title: 'Class', size: 10, active: false },
+                { key: 'name', title: 'Name / Organization', size: 30 },
+                { key: 'bib', title: 'Bib', size: 6 },
+                { key: 'penalty_time', title: 'Penalty', size: 9, active: false },
+                { key: 'penalty_laps', title: 'Penalty,l', size: 9, active: false },
+                { key: 'scores_ardf', title: 'ARDF', size: 4, active: isArdf },
+                { key: 'rogaine_points_earned', title: 'Total', size: 5, active: isRogaine },
+                { key: 'rogaine_penalty', title: 'Pen.', size: 4, active: isRogaine },
+                { key: 'rogaine_score', title: 'Pts', size: 4, active: isRogaine },
+                { key: 'result', title: 'Result / Diff', size: 14 },
+                { key: 'result_relay', title: 'Team result', size: 14 },
+                { key: 'speed', title: 'Pace', size: 12, active: false },
+                { key: 'place_show', title: 'Place', size: 6 },
+                { key: 'scores', title: 'Scores', size: 5, active: false },
+                { key: 'all_splits', title: 'Splits', active: false }
+            ],
+            active: function (key, val) {
+                for (var _i = 0, _a = this.fields; _i < _a.length; _i++) {
+                    var obj = _a[_i];
+                    if (key === obj.key) {
+                        obj.active = val;
+                    }
+                }
+            },
+            isActive: function (key) {
+                for (var _i = 0, _a = this.fields; _i < _a.length; _i++) {
+                    var obj = _a[_i];
+                    if (key === obj.key) {
+                        if (obj.active === void 0) {
+                            return true;
+                        }
+                        else {
+                            return !!obj.active;
+                        }
+                    }
+                }
+                return false;
+            },
+            getField: function (key) {
+                for (var _i = 0, _a = this.fields; _i < _a.length; _i++) {
+                    var obj = _a[_i];
+                    if (key === obj.key) {
+                        return obj
+                    }
+                }
+            },
+            getCopyFields: function () {
+                return JSON.parse(JSON.stringify(this.fields))
+            },
+            init: function () {
+                try {
+                    var isRelay = race.data.race_type === 3
+                    this.getField('all_splits').active = location.href.indexOf('all_splits=1') > -1;
+                    this.getField('scores').active = location.href.indexOf('scores=1') > -1;
+                    this.getField('penalty_time').active = location.href.indexOf('penalty_time=1') > -1;
+
+                    this.getField('result_relay').active = isRelay
+                } catch (e) { }
+                return this;
+            }
+        }.init();
+
+        store = {
+            showLinkForGroups: true,
+            splitsShow: true // this report's whole point is the split grid — on by default, unlike 1_results.html
+        };
+
+        try {
+            if (location.href.indexOf('s_splits=0') > -1) store.splitsShow = false;
+            store.rankingShow = location.href.indexOf('ranking=1') > -1;
+            store.showProtocolByCourse = location.href.indexOf('by_course=1') > -1;
+        } catch (e) { }
+
+        function render() {
+            var resultBlock = document.getElementById('results-tables');
+            resultBlock.innerHTML = '';
+            Fields.active('group', store.showProtocolByCourse);
+            if (store.showProtocolByCourse) {
+                var _a = race.courses;
+            } else {
+                var _a = race.groups;
+            }
+            for (var _i = 0; _i < _a.length; _i++) {
+                if (store.showProtocolByCourse) {
+                    var course = _a[_i];
+                    var rows = getResultsByCourse(course, store.count);
+                    var groupName = course.name;
+                } else {
+                    var group = _a[_i];
+                    var rows = getResultsByGroup(group, store.count);
+                    var course = group.course;
+                    var groupName = group.name;
+                }
+                if (!rows.length) {
+                    continue;
+                }
+                var chartKey = (store.showProtocolByCourse ? 'c:' : 'g:') + groupName;
+                var titleBlock = document.createElement('h2');
+                titleBlock.id = groupName;
+                var groupTitle = groupName;
+                if (course && course.controls && course.controls.length) {
+                    groupTitle += ', ' + course.controls.length + ' controls';
+                }
+                if (course && course.length) {
+                    groupTitle += ', ' + course.length / 1000 + ' km';
+                }
+                titleBlock.appendChild(document.createTextNode(groupTitle));
+                resultBlock.appendChild(titleBlock);
+                if (!store.showProtocolByCourse && store.showLinkForGroups) {
+                    resultBlock.appendChild(getGroupsBlockElement(race));
+                }
+                var fields = Fields.getCopyFields();
+                if (store.splitsShow && course && course.controls && course.controls.length) {
+                    resultBlock.appendChild(buildChartSection(chartKey, course, rows));
+                    fields.unshift({ key: 'chart_check', title: '' });
+                    rows.forEach(function (row) {
+                        // Any real competitor row can go on the chart, not just
+                        // finishers — a mispunched/DSQ/DNF runner's valid splits
+                        // up to where they stopped are still worth comparing.
+                        if (row.data) {
+                            row.chart_check = buildChartCheckbox(chartKey, String(row.data.person.bib));
+                        }
+                    });
+                    course.controls.forEach(function (control, index) {
+                        fields.push({ key: index + '_' + control.code, title: control.code })
+                    });
+                    fields.push({ key: 'finish_split', title: 'F' })
+                }
+                if (!store.tableView && !store.splitsShow && !Fields.isActive('all_splits')) {
+                    resultBlock.appendChild(new TableTextGenerator(rows, fields).getTable());
+                } else {
+                    resultBlock.appendChild(new TableGenerator(rows, fields).getTable({ className: 'sportorg-table' }));
+                }
+                //show ranking information
+                if (!store.showProtocolByCourse && store.rankingShow) {
+                    resultBlock.appendChild(getRankingByGroup(group))
+                }
+                if (store.newPage && _i < _a.length - 1) {
+                    var newPage = document.createElement('div');
+                    newPage.className = 'new-page';
+                    resultBlock.appendChild(newPage);
+                }
+            }
+            var query = {
+                s_splits: store.splitsShow ? 1 : 0,
+                ranking: store.rankingShow ? 1 : 0,
+                by_course: store.showProtocolByCourse ? 1 : 0,
+                all_splits: Fields.isActive('all_splits') ? 1 : 0,
+                scores: Fields.isActive('scores') ? 1 : 0,
+                penalty_time: Fields.isActive('penalty_time') ? 1 : 0
+            };
+            var queryString = '?';
+            Object.keys(query).forEach(function (key) {
+                if (query[key]) {
+                    queryString += key + '=' + query[key] + '&';
+                }
+            });
+            queryString += 'sportorg=1';
+            try {
+                var href = location.href.split('?')[0];
+                history.pushState({}, null, href + queryString);
+            } catch (e) { }
+        }
+
+        // Color scheme — applied to <body> so every scheme-2/3 CSS rule
+        // above (scoped as body[data-color-scheme="N"] ...) can target it;
+        // remembered per-browser so reopening the same exported file keeps
+        // your last pick (best-effort — file:// storage isn't guaranteed
+        // by every browser, hence the try/catch).
+        function applyColorScheme(n) {
+            document.body.dataset.colorScheme = String(n);
+            document.querySelectorAll('.scheme-btn').forEach(function (btn) {
+                btn.classList.toggle('is-active', btn.dataset.scheme === String(n));
+            });
+            try { localStorage.setItem('sportorg_split_scheme', String(n)); } catch (e) { }
+        }
+
+        var savedScheme = '1';
+        try { savedScheme = localStorage.getItem('sportorg_split_scheme') || '1'; } catch (e) { }
+        applyColorScheme(savedScheme);
+
+        document.querySelectorAll('.scheme-btn').forEach(function (btn) {
+            btn.addEventListener('click', function () { applyColorScheme(btn.dataset.scheme); });
+        });
+
+        // Chart interactions — bound once on the (stable) results container
+        // rather than re-bound per render(), since render() throws away and
+        // rebuilds every element inside it on every call.
+        var resultsContainer = document.getElementById('results-tables');
+        resultsContainer.addEventListener('change', function (e) {
+            if (e.target.classList.contains('split-chart-check')) {
+                onToggleChartHighlight(e.target.dataset.key, e.target.dataset.bib);
+            }
+        });
+        resultsContainer.addEventListener('click', function (e) {
+            var toggleBtn = e.target.closest('.split-chart-toggle-btn');
+            if (toggleBtn) { onToggleChartOpen(toggleBtn.dataset.key); return; }
+            var lineGroup = e.target.closest('.split-chart-line-group');
+            if (lineGroup) { onToggleChartHighlight(lineGroup.dataset.key, lineGroup.dataset.bib); return; }
+            var colHit = e.target.closest('.split-chart-colhit');
+            if (colHit) { onSelectChartColumn(colHit.dataset.key, colHit.dataset.cp); return; }
+            var clearBtn = e.target.closest('.split-chart-clear');
+            if (clearBtn) { onClearChartHighlights(clearBtn.dataset.key); return; }
+        });
+
+        render();
+
+        var Scrolling = {
+            direction: 1,
+            enabled: false,
+            lock: false,
+            prev: 0,
+            intervalTimer: 0,
+            init: function () {
+                var _this = this;
+                if (_this.intervalTimer) {
+                    clearInterval(_this.intervalTimer)
+                }
+                _this.intervalTimer = setInterval(function () {
+                    _this.lock = !_this.lock;
+                }, 5000);
+                window.onscroll = function () {
+                    var d = document.documentElement;
+                    var offset = d.scrollTop + window.innerHeight;
+                    var height = d.offsetHeight;
+
+                    if (offset === height) {
+                        _this.direction = -1;
+                    }
+                    if (offset <= window.innerHeight) {
+                        _this.direction = 1;
+                    }
+                };
+                this.pageScroll();
+                return this;
+            },
+            pageScroll: function () {
+                var _this = this;
+                if (_this.enabled && !_this.lock) {
+                    window.scrollBy(10, _this.direction);
+                }
+                setTimeout(function () {
+                    _this.pageScroll();
+                }, 10);
+            }
+        }.init();
+
+        new SettingsGenerator([
+            {
+                title: 'Classes links',
+                value: !!store.showLinkForGroups,
+                change: function (checked) {
+                    store.showLinkForGroups = checked;
+                    render()
+                }
+            },
+            {
+                title: 'Results by courses',
+                value: !!store.showProtocolByCourse,
+                change: function (checked) {
+                    store.showProtocolByCourse = checked;
+                    render()
+                }
+            },
+            {
+                title: 'Table view',
+                value: !!store.tableView,
+                change: function (checked) {
+                    store.tableView = checked;
+                    render()
+                }
+            },
+            {
+                title: 'Bib',
+                value: Fields.isActive('bib'),
+                change: function (checked) {
+                    Fields.active('bib', checked);
+                    render()
+                }
+            },
+            {
+                title: 'Penalty time',
+                value: Fields.isActive('penalty_time'),
+                change: function (checked) {
+                    Fields.active('penalty_time', checked);
+                    render()
+                }
+            },
+            {
+                title: 'Penalty laps',
+                value: Fields.isActive('penalty_laps'),
+                change: function (checked) {
+                    Fields.active('penalty_laps', checked);
+                    render()
+                }
+            },
+            {
+                title: 'Pace',
+                value: Fields.isActive('speed'),
+                change: function (checked) {
+                    Fields.active('speed', checked);
+                    render()
+                }
+            },
+            {
+                title: 'Splits (no forking)',
+                value: !!store.splitsShow,
+                change: function (checked) {
+                    store.splitsShow = checked;
+                    render()
+                }
+            },
+            {
+                title: 'Splits (all)',
+                value: Fields.isActive('all_splits'),
+                change: function (checked) {
+                    Fields.active('all_splits', checked);
+                    render()
+                }
+            },
+            {
+                title: 'Scores',
+                value: Fields.isActive('scores'),
+                change: function (checked) {
+                    Fields.active('scores', checked);
+                    render()
+                }
+            },
+            {
+                title: 'Ranking (Russian)',
+                value: store.rankingShow,
+                change: function (checked) {
+                    store.rankingShow = checked;
+                    render()
+                }
+            },
+            {
+                title: 'Show first: ',
+                value: [
+                    { text: 'All', value: 0 },
+                    { text: '1', value: 1 },
+                    { text: '3', value: 3 },
+                    { text: '4', value: 4 },
+                    { text: '5', value: 5 },
+                    { text: '6', value: 6 },
+                    { text: '10', value: 10 }
+                ],
+                change: function (arr) {
+                    store.count = arr[0];
+                    render();
+                }
+            },
+            {
+                title: 'Each class from new page',
+                value: false,
+                change: function (checked) {
+                    store.newPage = checked;
+                    render()
+                }
+            },
+            {
+                title: 'Autoscroll',
+                value: Scrolling.enabled,
+                change: function (checked) {
+                    Scrolling.enabled = checked;
+                }
+            },
+        ]).show();
+    })();
+</script>
+
+</div>
+    <div id="footer">
+        
+        <a href="https://sportorg.readthedocs.io">Software SportOrg v1.7.2</a>
+        <script type="text/javascript">
+            var l = new Date();
+            document.write('<span class="print-only">Print time: ' + l.toLocaleString() + '</span>');
+        </script>
+        
+    </div>
+</body>
+
+</html>
